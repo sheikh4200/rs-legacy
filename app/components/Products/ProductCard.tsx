@@ -32,7 +32,8 @@ export default function ProductCard({ product }: ProductCardProps) {
       price: product.price,
       image: product.image,
       originalPrice: product.originalPrice,
-      category: product.category
+      category: product.category,
+      currency:product.currency
     });
     
     setIsAddingToCart(false);

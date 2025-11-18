@@ -75,7 +75,7 @@ export const MOCK_PRODUCTS: Product[] = [
     reviewCount: 128,
     inStock: true,
     stockCount: 50,
-    images: ["https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500&h=500&fit=crop"],
+    images: ["/images/img2.jpg"],
     features: ["100% Cotton", "Machine Wash", "Premium Fit"],
     specifications: { "Material": "Cotton", "Fit": "Regular" },
     colors: ["black", "white", "gray"],
@@ -94,7 +94,7 @@ export const MOCK_PRODUCTS: Product[] = [
     reviewCount: 89,
     inStock: true,
     stockCount: 25,
-    images: ["https://images.unsplash.com/photo-1551028719-00167b16eac5?w=500&h=500&fit=crop"],
+    images: ["/images/img3.jpg"],
     features: ["100% Cotton", "Classic Fit", "Durable"],
     specifications: { "Material": "Denim", "Style": "Jacket" },
     colors: ["blue", "black"],
@@ -113,7 +113,7 @@ export const MOCK_PRODUCTS: Product[] = [
     reviewCount: 256,
     inStock: true,
     stockCount: 30,
-    images: ["https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=500&h=500&fit=crop"],
+    images: ["/images/img5.jpg"],
     features: ["Comfort Fit", "Durable Sole", "Breathable"],
     specifications: { "Type": "Sneakers", "Sole": "Rubber" },
     colors: ["white", "black"],
@@ -132,7 +132,7 @@ export const MOCK_PRODUCTS: Product[] = [
     reviewCount: 178,
     inStock: true,
     stockCount: 15,
-    images: ["https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=500&h=500&fit=crop"],
+    images: ["/images/img6.jpg"],
     features: ["Genuine Leather", "Multiple Compartments", "Adjustable Strap"],
     specifications: { "Material": "Leather", "Style": "Handbag" },
     colors: ["brown", "black", "beige"],
@@ -145,7 +145,7 @@ export const MOCK_PRODUCTS: Product[] = [
 export const CAROUSEL_SLIDES: CarouselSlide[] = [
   {
     id: 1,
-    image: "/images/img1.jpg",
+    image: "/images/img6.jpg",
     title: "Summer Collection",
     subtitle: "New Arrivals",
     gradient: "from-blue-500/20 to-cyan-500/20"
@@ -333,11 +333,11 @@ export const ProductCard = React.memo(({ product, onAddToCart }: { product: Prod
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-baseline gap-2">
             <span className="text-2xl font-bold text-gray-900">
-              ${product.price}
+              {product.price}
             </span>
             {product.originalPrice && product.originalPrice > product.price && (
               <span className="text-sm text-gray-500 line-through">
-                ${product.originalPrice}
+                {product.originalPrice}
               </span>
             )}
           </div>
@@ -1085,3 +1085,5 @@ export default function Home() {
     </>
   );
 }
+
+

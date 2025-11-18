@@ -19,6 +19,7 @@ export interface Product {
   stockCount:number;
   features: string[];
   specifications: Record<string, string>;
+   currency:string
 
 
 }

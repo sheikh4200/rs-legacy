@@ -4,7 +4,7 @@
 const IMAGE_PATHS = {
   // Clothing images
   T_SHIRT: '/images/img1.jpg',
-  DENIM_JACKET: '/images/img2.jpg',
+  DENIM_JACKET: '/images/img6.jpg',
   WOOL_SCARF: '/images/img3.jpg',
   BEANIE_HAT: '/images/img4.jpg',
   RUNNING_SHORTS: '/images/img5.jpg',
@@ -58,6 +58,8 @@ export interface Product {
   isNew: boolean;
   isFeatured: boolean;
   colors: string[];
+
+  
 }
 
 // Organized mock data with local images

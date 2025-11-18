@@ -19,7 +19,8 @@ export default function WishlistPage() {
       price: item.price,
       image: item.image,
       originalPrice: item.originalPrice,
-      category: item.category
+      category: item.category,
+      currency:"PKR"
     });
   };
 
@@ -31,7 +32,9 @@ export default function WishlistPage() {
         price: item.price,
         image: item.image,
         originalPrice: item.originalPrice,
-        category: item.category
+        category: item.category,
+      currency:"PKR"
+
       });
     });
     clearWishlist();

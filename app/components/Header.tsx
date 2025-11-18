@@ -1,10 +1,10 @@
-// components/Header.tsx
+// components/Header.tsx - FIXED SEARCH TOGGLE
 "use client";
 
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { ShoppingCart, Search, User, Menu, X, ChevronDown, Sparkles, Star, Gem, Crown, Zap, Cloud, Clock, LogOut, Settings } from 'lucide-react';
+import { ShoppingCart, Search, User, Menu, X, ChevronDown, Sparkles, Star, Gem, Crown, Zap, Cloud, Clock, LogOut, Settings, Loader2 } from 'lucide-react';
 import { useCart } from '../lib/cart-context';
 import { useAuth } from '../lib/auth-context';
 
@@ -18,6 +18,71 @@ interface UserData {
   profileImage?: string;
 }
 
+interface SearchProduct {
+  id: string;
+  name: string;
+  price: number;
+  originalPrice?: number;
+  image: string;
+  category: string;
+  inStock: boolean;
+  rating: number;
+}
+
+// Mock product database - Replace with your actual API
+const PRODUCT_DATABASE: SearchProduct[] = [
+  {
+    id: "1",
+    name: "Classic Cotton T-Shirt",
+    price: 25.99,
+    originalPrice: 35.99,
+    image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500&h=500&fit=crop",
+    category: "clothing",
+    inStock: true,
+    rating: 4.5
+  },
+  {
+    id: "2",
+    name: "Premium Denim Jacket",
+    price: 79.99,
+    originalPrice: 99.99,
+    image: "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=500&h=500&fit=crop",
+    category: "clothing",
+    inStock: true,
+    rating: 4.8
+  },
+  {
+    id: "3",
+    name: "Urban Style Sneakers",
+    price: 89.99,
+    originalPrice: 119.99,
+    image: "https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=500&h=500&fit=crop",
+    category: "footwear",
+    inStock: false,
+    rating: 4.7
+  },
+  {
+    id: "4",
+    name: "Elegance Formal Shirt",
+    price: 45.99,
+    originalPrice: 59.99,
+    image: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=500&h=500&fit=crop",
+    category: "clothing",
+    inStock: true,
+    rating: 4.3
+  },
+  {
+    id: "5",
+    name: "Wireless Bluetooth Headphones",
+    price: 129.99,
+    originalPrice: 159.99,
+    image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&h=500&fit=crop",
+    category: "electronics",
+    inStock: true,
+    rating: 4.6
+  }
+];
+
 // Constants
 const NAVIGATION_ITEMS = [
   { 
@@ -28,7 +93,7 @@ const NAVIGATION_ITEMS = [
   },
   { 
     name: 'Products', 
-    href: '/Product', 
+    href: '/products', 
     icon: Gem,
     description: 'Discover excellence'
   },
@@ -49,35 +114,35 @@ const NAVIGATION_ITEMS = [
 const DROPDOWN_LINKS = [
   { 
     name: 'All Products', 
-    href: '/Product', 
+    href: '/products', 
     icon: Sparkles, 
     badge: '✨',
     gradient: 'from-purple-500 to-pink-500'
   },
   { 
     name: 'New Arrivals', 
-    href: '/Product?filter=newArrivals', 
+    href: '/products?filter=new', 
     icon: Star, 
     badge: 'NEW',
     gradient: 'from-green-500 to-blue-500'
   },
   { 
     name: 'Best Sellers', 
-    href: '/Product?filter=sale', 
+    href: '/products?filter=bestsellers', 
     icon: Crown, 
     badge: 'TOP',
     gradient: 'from-yellow-500 to-orange-500'
   },
   { 
     name: 'Limited Edition', 
-    href: '/Product?filter=limited', 
+    href: '/products?filter=limited', 
     icon: Gem, 
     badge: 'EXCLUSIVE',
     gradient: 'from-purple-500 to-blue-500'
   },
   { 
     name: 'Sale', 
-    href: '/Product?filter=sale', 
+    href: '/products?filter=sale', 
     icon: '⚡', 
     badge: '50% OFF',
     gradient: 'from-red-500 to-pink-500'
@@ -88,7 +153,7 @@ export default function Header() {
   const { state } = useCart();
   const pathname = usePathname();
   const router = useRouter();
-  const { user, logout } = useAuth(); // Removed isAdmin and loginAsAdmin
+  const { user, logout } = useAuth();
   
   // State
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -104,11 +169,17 @@ export default function Header() {
   const [currentDate, setCurrentDate] = useState('');
   const [isClockHovered, setIsClockHovered] = useState(false);
   
+  // Enhanced Search States
+  const [searchResults, setSearchResults] = useState<SearchProduct[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+
   // Refs
   const searchRef = useRef<HTMLDivElement>(null);
   const userDropdownRef = useRef<HTMLDivElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Set client-side flag
   useEffect(() => {
@@ -150,22 +221,87 @@ export default function Header() {
     };
   }, [isClient]);
 
+  // Enhanced Search Functionality - FIXED
+  const performSearch = useCallback((query: string) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      setShowSearchResults(false);
+      setIsSearching(false);
+      return;
+    }
+
+    setIsSearching(true);
+    
+    // Simulate API call delay
+    setTimeout(() => {
+      const filteredProducts = PRODUCT_DATABASE.filter(product =>
+        product.name.toLowerCase().includes(query.toLowerCase()) ||
+        product.category.toLowerCase().includes(query.toLowerCase())
+      );
+      
+      setSearchResults(filteredProducts);
+      setShowSearchResults(true);
+      setIsSearching(false);
+    }, 300);
+  }, []);
+
+  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+    performSearch(query);
+  }, [performSearch]);
+
+  const handleSearchSubmit = useCallback((e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!searchQuery.trim()) return;
+
+    // If we have search results, navigate to the first product
+    if (searchResults.length > 0) {
+      const firstResult = searchResults[0];
+      router.push(`/products/${firstResult.id}`);
+    } else {
+      // If no results found, redirect to products page with search query
+      router.push(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
+    }
+    
+    // Reset search state
+    closeSearch();
+  }, [searchQuery, searchResults, router]);
+
+  const handleProductClick = useCallback((productId: string) => {
+    router.push(`/products/${productId}`);
+    closeSearch();
+  }, [router]);
+
+  const closeSearch = useCallback(() => {
+    setIsSearchOpen(false);
+    setSearchQuery('');
+    setSearchResults([]);
+    setShowSearchResults(false);
+    setIsSearching(false);
+  }, []);
+
   // Click outside handler
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      // Close search if clicking outside
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        if (isSearchOpen) {
+          closeSearch();
+        }
+      }
+
+      // Close other dropdowns
       const targets = [
         { ref: userDropdownRef, condition: isUserDropdownOpen },
-        { ref: searchRef, condition: isSearchOpen },
         { ref: mobileMenuRef, condition: isMenuOpen },
         { ref: dropdownRef, condition: isDropdownOpen }
       ];
 
       targets.forEach(({ ref, condition }) => {
         if (ref.current && !ref.current.contains(event.target as Node) && condition) {
-          if (ref === searchRef) {
-            setIsSearchOpen(false);
-            setSearchQuery('');
-          } else if (ref === userDropdownRef) {
+          if (ref === userDropdownRef) {
             setIsUserDropdownOpen(false);
           } else if (ref === mobileMenuRef) {
             closeAllMenus();
@@ -178,7 +314,7 @@ export default function Header() {
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isSearchOpen, isUserDropdownOpen, isMenuOpen, isDropdownOpen]);
+  }, [isSearchOpen, isUserDropdownOpen, isMenuOpen, isDropdownOpen, closeSearch]);
 
   // Close dropdown when route changes
   useEffect(() => {
@@ -194,7 +330,7 @@ export default function Header() {
 
   const filteredDropdownLinks = useMemo(() => 
     DROPDOWN_LINKS.filter(link => 
-      link.href !== '/Product' || pathname !== '/Product'
+      link.href !== '/products' || pathname !== '/products'
     ), [pathname]
   );
 
@@ -217,63 +353,56 @@ export default function Header() {
     getUserProfileImage() !== null
   , [getUserProfileImage]);
 
-  // Core functions
+  // Core functions - FIXED TOGGLE SEARCH
   const closeAllMenus = useCallback(() => {
     setIsMenuOpen(false);
     setIsDropdownOpen(false);
     setIsUserDropdownOpen(false);
-    setIsSearchOpen(false);
-  }, []);
+    closeSearch();
+  }, [closeSearch]);
 
   const toggleMenu = useCallback(() => {
     setIsMenuOpen(prev => {
       if (!prev) {
         setIsDropdownOpen(false);
         setIsUserDropdownOpen(false);
+        closeSearch();
       }
       return !prev;
     });
-  }, []);
+  }, [closeSearch]);
 
   const toggleDropdown = useCallback(() => {
     setIsDropdownOpen(prev => {
       if (prev) return !prev;
       setIsUserDropdownOpen(false);
+      closeSearch();
       return true;
     });
-  }, []);
+  }, [closeSearch]);
 
   const toggleUserDropdown = useCallback(() => {
     setIsUserDropdownOpen(prev => {
       if (prev) return !prev;
       setIsDropdownOpen(false);
+      closeSearch();
       return true;
     });
-  }, []);
+  }, [closeSearch]);
 
+  // FIXED: Simplified toggleSearch function
   const toggleSearch = useCallback(() => {
-    setIsSearchOpen(prev => {
-      if (!prev) {
-        setTimeout(() => {
-          const searchInput = document.getElementById('search-input');
-          searchInput?.focus();
-        }, 100);
-      } else {
-        setSearchQuery('');
-      }
-      return !prev;
-    });
-  }, []);
-
-  const handleSearch = useCallback((e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-      setIsSearchOpen(false);
-      setSearchQuery('');
+    if (isSearchOpen) {
+      closeSearch();
+    } else {
       closeAllMenus();
+      setIsSearchOpen(true);
+      // Focus input after a small delay to ensure it's rendered
+      setTimeout(() => {
+        searchInputRef.current?.focus();
+      }, 100);
     }
-  }, [searchQuery, router, closeAllMenus]);
+  }, [isSearchOpen, closeAllMenus, closeSearch]);
 
   const handleAccountClick = useCallback(() => {
     if (user) {
@@ -528,34 +657,133 @@ export default function Header() {
   }, [hasProfileImage, getUserProfileImage, getUserFullName, getUserInitials]);
 
   const SearchInterface = () => (
-    <div ref={searchRef} className="absolute top-0 left-0 right-0 h-20 flex items-center justify-center px-4 sm:px-6 lg:px-8 z-60 bg-white/95 dark:bg-gray-900/95 backdrop-blur-3xl">
-      <form onSubmit={handleSearch} className="w-full max-w-4xl">
+    <div ref={searchRef} className="absolute top-0 left-0 right-0 h-20 flex items-center justify-center px-4 sm:px-6 lg:px-8 z-60 bg-white/95 dark:bg-gray-900/95 backdrop-blur-3xl border-b border-gray-200/20 dark:border-gray-700/20">
+      <form onSubmit={handleSearchSubmit} className="w-full max-w-4xl relative">
         <div className="relative">
           <div className="absolute inset-0 bg-gradient-to-r from-purple-500/40 to-blue-500/40 rounded-3xl blur-2xl transform scale-105 animate-pulse" />
           
           <input
+            ref={searchInputRef}
             id="search-input"
             type="text"
-            placeholder="✨ Discover timeless elegance..."
+            placeholder="✨ Search products... (Try 'T-Shirt', 'Jacket', 'Sneakers')"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={handleSearchChange}
             className="relative w-full px-8 py-5 pl-14 pr-14 rounded-3xl border-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-3xl shadow-2xl text-lg text-gray-800 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-purple-500/40 transition-all duration-500 font-light"
             autoFocus
           />
           
           <Search className="absolute left-6 top-1/2 transform -translate-y-1/2 text-purple-500 w-5 h-5" />
           
+          {isSearching && (
+            <div className="absolute right-12 top-1/2 transform -translate-y-1/2">
+              <Loader2 className="w-5 h-5 text-purple-500 animate-spin" />
+            </div>
+          )}
+          
           <button
             type="button"
-            onClick={() => {
-              setIsSearchOpen(false);
-              setSearchQuery('');
-            }}
+            onClick={closeSearch}
             className="absolute right-6 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-all duration-300 p-1 rounded-full hover:bg-gray-200/50 dark:hover:bg-gray-700/50"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
+
+        {/* Enhanced Search Results Dropdown */}
+        {showSearchResults && searchQuery.trim() && (
+          <div className="absolute top-full left-0 right-0 mt-4 bg-white/95 dark:bg-gray-900/95 backdrop-blur-3xl rounded-3xl shadow-2xl shadow-purple-500/20 border border-white/20 dark:border-gray-700/30 py-4 z-70 overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-white/60 to-gray-50/60 dark:from-gray-800/60 dark:to-gray-900/60" />
+            <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-purple-500 to-blue-500" />
+            
+            <div className="relative z-10 max-h-96 overflow-y-auto">
+              {searchResults.length > 0 ? (
+                <>
+                  <div className="px-6 py-3 border-b border-gray-200/30 dark:border-gray-700/30">
+                    <p className="text-sm font-semibold text-gray-600 dark:text-gray-400">
+                      Found {searchResults.length} product{searchResults.length !== 1 ? 's' : ''} for "{searchQuery}"
+                    </p>
+                  </div>
+                  
+                  {searchResults.map((product) => (
+                    <button
+                      key={product.id}
+                      onClick={() => handleProductClick(product.id)}
+                      className="w-full flex items-center space-x-4 px-6 py-4 text-left hover:bg-purple-50/50 dark:hover:bg-purple-900/20 transition-all duration-300 group border-b border-gray-100/30 dark:border-gray-700/30 last:border-b-0"
+                    >
+                      <img
+                        src={product.image}
+                        alt={product.name}
+                        className="w-16 h-16 rounded-xl object-cover border border-gray-200/30 dark:border-gray-700/30 group-hover:scale-105 transition-transform duration-300"
+                      />
+                      
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-gray-800 dark:text-white truncate group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors duration-300">
+                          {product.name}
+                        </p>
+                        <div className="flex items-center space-x-3 mt-2">
+                          <span className="text-lg font-bold text-purple-600 dark:text-purple-400">
+                            ${product.price}
+                          </span>
+                          {product.originalPrice && (
+                            <span className="text-sm text-gray-500 dark:text-gray-400 line-through">
+                              ${product.originalPrice}
+                            </span>
+                          )}
+                          <span className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full capitalize">
+                            {product.category}
+                          </span>
+                          {!product.inStock && (
+                            <span className="text-xs text-red-500 font-semibold">
+                              Out of Stock
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center space-x-1 mt-1">
+                          <Star className="w-3 h-3 text-yellow-400 fill-current" />
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                            {product.rating}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <ChevronDown className="w-4 h-4 text-gray-400 transform -rotate-90 group-hover:scale-110 transition-transform duration-300" />
+                    </button>
+                  ))}
+                  
+                  <div className="px-6 py-4 border-t border-gray-200/30 dark:border-gray-700/30 bg-gradient-to-r from-purple-50/50 to-blue-50/50 dark:from-purple-900/20 dark:to-blue-900/20">
+                    <button
+                      type="submit"
+                      className="w-full flex items-center justify-center space-x-2 py-3 px-4 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-2xl font-semibold hover:from-purple-600 hover:to-blue-600 transition-all duration-300 transform hover:scale-105 shadow-lg"
+                    >
+                      <Search className="w-4 h-4" />
+                      <span>View First Product</span>
+                    </button>
+                    <p className="text-xs text-center text-gray-500 dark:text-gray-400 mt-2">
+                      Or click any product above to view details
+                    </p>
+                  </div>
+                </>
+              ) : !isSearching ? (
+                <div className="px-6 py-8 text-center">
+                  <Search className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-600 dark:text-gray-400 font-semibold mb-2">
+                    No products found
+                  </p>
+                  <p className="text-sm text-gray-500 dark:text-gray-500 mb-4">
+                    We couldn't find any products matching "{searchQuery}"
+                  </p>
+                  <button
+                    type="submit"
+                    className="inline-flex items-center space-x-2 py-3 px-6 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-2xl font-semibold hover:from-purple-600 hover:to-blue-600 transition-all duration-300 transform hover:scale-105 shadow-lg"
+                  >
+                    <span>Browse All Products</span>
+                  </button>
+                </div>
+              ) : null}
+            </div>
+          </div>
+        )}
       </form>
     </div>
   );
@@ -687,7 +915,7 @@ export default function Header() {
 
             {/* Enhanced Action Buttons */}
             <div className="hidden md:flex items-center space-x-2">
-              {/* Search Button */}
+              {/* Search Button - FIXED: Now properly toggles */}
               <button 
                 onClick={toggleSearch}
                 className={`relative p-3 transition-all duration-500 group ${
@@ -931,17 +1159,22 @@ export default function Header() {
 
                 {/* Enhanced Mobile Search */}
                 <div className="px-6 mb-8 relative">
-                  <form onSubmit={handleSearch}>
+                  <form onSubmit={handleSearchSubmit}>
                     <div className="relative">
                       <div className="absolute inset-0 bg-gradient-to-r from-purple-500/25 to-blue-500/25 rounded-3xl blur-lg transform scale-105" />
                       <input
                         type="text"
-                        placeholder="🔮 Search with elegance..."
+                        placeholder="🔮 Search products..."
                         value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onChange={handleSearchChange}
                         className="relative w-full px-6 py-4 pl-12 rounded-3xl border-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm shadow-2xl text-gray-800 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-purple-500/20 transition-all duration-500 text-base font-light"
                       />
                       <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-purple-500 w-4 h-4" />
+                      {isSearching && (
+                        <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
+                          <Loader2 className="w-4 h-4 text-purple-500 animate-spin" />
+                        </div>
+                      )}
                     </div>
                   </form>
                 </div>

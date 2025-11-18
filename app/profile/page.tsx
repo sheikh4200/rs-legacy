@@ -203,7 +203,7 @@ export default function ProfilePage() {
                   <span>Settings</span>
                 </button>
                 <button 
-                  onClick={() => router.push('/orders')}
+                  onClick={() => router.push('/order')}
                   className="w-full flex items-center space-x-3 px-4 py-3 text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 rounded-2xl font-semibold transition-colors"
                 >
                   <CreditCard className="w-5 h-5" />

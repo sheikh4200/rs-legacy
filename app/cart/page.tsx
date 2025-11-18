@@ -10,6 +10,18 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
+// Currency conversion utility
+const USD_TO_PKR = 280;
+const FREE_SHIPPING_THRESHOLD = 14000; // Rs 14,000 (equivalent to $50)
+
+const convertToPKR = (usdPrice: number): number => {
+  return Math.round(usdPrice * USD_TO_PKR);
+};
+
+const formatPKR = (amount: number): string => {
+  return `Rs ${amount.toLocaleString('en-PK')}`;
+};
+
 // Enhanced debug component
 function CartDebug() {
   const { state } = useCart();
@@ -47,25 +59,25 @@ function CartDebug() {
     item.id && item.name && !isNaN(item.price) && !isNaN(item.quantity)
   );
 
-  return (
-    <div className="fixed top-4 right-4 bg-red-500 text-white p-3 rounded-lg z-50 text-sm max-w-xs">
-      <div>🛒 Valid Items: {validItems.length}</div>
+  // return (
+    // <div className="fixed top-4 right-4 bg-red-500 text-white p-3 rounded-lg z-50 text-sm max-w-xs">
+      {/* <div>🛒 Valid Items: {validItems.length}</div>
       <div>📦 Total Count: {state.itemCount || 0}</div>
-      <div>💰 Total: ${(state.total || 0).toFixed(2)}</div>
-      {validItems.length > 0 && (
+      <div>💰 Total: {formatPKR(state.total || 0)}</div> */}
+      {/* {validItems.length > 0 && (
         <div className="mt-2 border-t pt-1">
           <div>First item: {validItems[0].name}</div>
           <div>Qty: {validItems[0].quantity}</div>
-          <div>Price: ${validItems[0].price}</div>
+          <div>Price: {formatPKR(validItems[0].price)}</div>
         </div>
-      )}
-      {state.items.length !== validItems.length && (
+      )} */}
+      {/* {state.items.length !== validItems.length && (
         <div className="mt-1 text-yellow-300">
           ⚠️ {state.items.length - validItems.length} invalid items
         </div>
       )}
-    </div>
-  );
+    </div> */}
+  // );
 }
 
 export default function CartPage() {
@@ -88,8 +100,8 @@ export default function CartPage() {
   const itemCount = validItems.reduce((total, item) => total + (item.quantity || 0), 0);
   const total = validItems.reduce((total, item) => total + (item.price || 0) * (item.quantity || 0), 0);
 
-  const shippingCost = total > 50 ? 0 : 9.99;
-  const tax = total * 0.08;
+  const shippingCost = total > FREE_SHIPPING_THRESHOLD ? 0 : 500; // Rs 500 shipping
+  const tax = total * 0.10; // 13% tax rate for Pakistan
   const finalTotal = total + shippingCost + tax;
 
   // Enhanced debugging
@@ -190,7 +202,7 @@ export default function CartPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16 max-w-2xl mx-auto">
               {[
                 { icon: <Shield className="w-8 h-8" />, title: "Secure Payment", desc: "100% protected" },
-                { icon: <Truck className="w-8 h-8" />, title: "Free Shipping", desc: "On orders over $50" },
+                { icon: <Truck className="w-8 h-8" />, title: "Free Shipping", desc: `On orders over ${formatPKR(FREE_SHIPPING_THRESHOLD)}` },
                 { icon: <Clock className="w-8 h-8" />, title: "Easy Returns", desc: "30-day policy" },
               ].map((feature, index) => (
                 <motion.div
@@ -279,7 +291,7 @@ export default function CartPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16 max-w-2xl mx-auto">
               {[
                 { icon: <Shield className="w-8 h-8" />, title: "Secure Payment", desc: "100% protected" },
-                { icon: <Truck className="w-8 h-8" />, title: "Free Shipping", desc: "On orders over $50" },
+                { icon: <Truck className="w-8 h-8" />, title: "Free Shipping", desc: `On orders over ${formatPKR(FREE_SHIPPING_THRESHOLD)}` },
                 { icon: <Clock className="w-8 h-8" />, title: "Easy Returns", desc: "30-day policy" },
               ].map((feature, index) => (
                 <motion.div
@@ -370,7 +382,7 @@ export default function CartPage() {
               <AnimatePresence>
                 {validItems.map((item) => (
                   <motion.div
-                    key={`${item.id}-${item.quantity}`} // Unique key with quantity to avoid duplicates
+                    key={`${item.id}-${item.quantity}`}
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: 20 }}
@@ -388,7 +400,7 @@ export default function CartPage() {
                         />
                         
                         {/* Sale Badge */}
-                        {item.price < 50 && (
+                        {item.price < 14000 && ( // Rs 14,000 threshold for sale
                           <div className="absolute -top-2 -left-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
                             Sale
                           </div>
@@ -403,7 +415,7 @@ export default function CartPage() {
                               {item.name}
                             </h3>
                             <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                              ${item.price.toFixed(2)}
+                              {formatPKR(item.price)}
                             </p>
                           </div>
                           
@@ -448,7 +460,7 @@ export default function CartPage() {
                           <div className="text-right">
                             <p className="text-sm text-gray-600 dark:text-gray-400">Total</p>
                             <p className="text-xl font-bold text-gray-900 dark:text-white">
-                              ${((item.price || 0) * (item.quantity || 0)).toFixed(2)}
+                              {formatPKR((item.price || 0) * (item.quantity || 0))}
                             </p>
                           </div>
                         </div>
@@ -485,7 +497,7 @@ export default function CartPage() {
               {/* Cart Summary Mobile */}
               <div className="sm:hidden text-right">
                 <p className="text-lg font-bold text-gray-900 dark:text-white">
-                  ${total.toFixed(2)}
+                  {formatPKR(total)}
                 </p>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   {itemCount} items
@@ -510,7 +522,7 @@ export default function CartPage() {
               <div className="space-y-4 mb-6">
                 <div className="flex justify-between text-gray-600 dark:text-gray-400">
                   <span>Subtotal ({itemCount} items)</span>
-                  <span>${total.toFixed(2)}</span>
+                  <span>{formatPKR(total)}</span>
                 </div>
                 
                 <div className="flex justify-between text-gray-600 dark:text-gray-400">
@@ -519,31 +531,31 @@ export default function CartPage() {
                     {shippingCost === 0 ? (
                       <span className="text-green-600 font-semibold">FREE</span>
                     ) : (
-                      `$${shippingCost.toFixed(2)}`
+                      formatPKR(shippingCost)
                     )}
                   </span>
                 </div>
                 
                 <div className="flex justify-between text-gray-600 dark:text-gray-400">
-                  <span>Tax</span>
-                  <span>${tax.toFixed(2)}</span>
+                  <span>Tax (13%)</span>
+                  <span>{formatPKR(tax)}</span>
                 </div>
 
                 {/* Shipping Progress */}
-                {total < 50 && (
+                {total < FREE_SHIPPING_THRESHOLD && (
                   <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-3 mt-4">
                     <div className="flex justify-between text-sm mb-2">
                       <span className="text-yellow-800 dark:text-yellow-200">
-                        Free shipping on orders over $50
+                        Free shipping on orders over {formatPKR(FREE_SHIPPING_THRESHOLD)}
                       </span>
                       <span className="font-semibold text-yellow-800 dark:text-yellow-200">
-                        ${(50 - total).toFixed(2)} away
+                        {formatPKR(FREE_SHIPPING_THRESHOLD - total)} away
                       </span>
                     </div>
                     <div className="w-full bg-yellow-200 dark:bg-yellow-800 rounded-full h-2">
                       <div 
                         className="bg-yellow-500 h-2 rounded-full transition-all duration-500"
-                        style={{ width: `${Math.min((total / 50) * 100, 100)}%` }}
+                        style={{ width: `${Math.min((total / FREE_SHIPPING_THRESHOLD) * 100, 100)}%` }}
                       ></div>
                     </div>
                   </div>
@@ -552,12 +564,12 @@ export default function CartPage() {
                 <div className="border-t dark:border-gray-600 pt-4">
                   <div className="flex justify-between text-lg font-bold text-gray-900 dark:text-white">
                     <span>Total</span>
-                    <span>${finalTotal.toFixed(2)}</span>
+                    <span>{formatPKR(finalTotal)}</span>
                   </div>
                 </div>
               </div>
 
-              {/* Checkout Button - Now redirects to address page */}
+              {/* Checkout Button */}
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
@@ -590,7 +602,7 @@ export default function CartPage() {
                   We accept:
                 </p>
                 <div className="flex justify-center gap-3">
-                  {['Visa', 'MC', 'PayPal', 'Apple'].map((method) => (
+                  {['Visa', 'MC', 'JazzCash', 'EasyPaisa'].map((method) => (
                     <div
                       key={method}
                       className="w-12 h-8 bg-gray-100 dark:bg-gray-700 rounded flex items-center justify-center text-xs font-semibold text-gray-600 dark:text-gray-400"
@@ -611,7 +623,7 @@ export default function CartPage() {
             >
               {[
                 { icon: <Shield className="w-5 h-5" />, text: "30-day return policy" },
-                { icon: <Truck className="w-5 h-5" />, text: "Free shipping over $50" },
+                { icon: <Truck className="w-5 h-5" />, text: `Free shipping over ${formatPKR(FREE_SHIPPING_THRESHOLD)}` },
                 { icon: <Clock className="w-5 h-5" />, text: "Customer support 24/7" },
               ].map((feature, index) => (
                 <div

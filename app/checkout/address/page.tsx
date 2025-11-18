@@ -47,7 +47,7 @@ const mockAddresses: Address[] = [
   {
     id: '1',
     type: 'home',
-    firstName: 'John',
+    firstName: '',
     lastName: 'Doe',
     phone: '+1234567890',
     email: 'john@example.com',
